@@ -64,9 +64,11 @@ interface SetupFormProps {
     streams: Step1["agent"]["streams"]
   }
   scannedHints?: ScannedHints | null
+  onStreamsChange?: (s: Step1["agent"]["streams"]) => void
+  onWebsiteChange?: (url: string) => void
 }
 
-export function SetupForm({ initial, scannedHints }: SetupFormProps) {
+export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteChange }: SetupFormProps) {
   const router = useRouter()
   const { setLiveStreams, setSelectedSkillId } = useStreamContext()
   const [workspace, setWorkspace] = useState(initial.workspace)
@@ -120,6 +122,7 @@ export function SetupForm({ initial, scannedHints }: SetupFormProps) {
 
     setStreams(next)
     setLiveStreams(next)
+    onStreamsChange?.(next)
 
     if (!isRemoving) {
       const prevActiveIds = new Set(
@@ -417,7 +420,7 @@ export function SetupForm({ initial, scannedHints }: SetupFormProps) {
             placeholder="https://acme.com"
             className="h-10 text-[14px]"
             value={website}
-            onChange={(e) => setWebsite(e.target.value)}
+            onChange={(e) => { setWebsite(e.target.value); onWebsiteChange?.(e.target.value) }}
           />
           {errors.website && <FieldError message={errors.website} />}
         </div>

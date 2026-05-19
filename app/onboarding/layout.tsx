@@ -38,6 +38,13 @@ export default async function OnboardingLayout({ children }: { children: React.R
   const m = pathname.match(/step-(\d+)/)
   const currentStep = m ? Number(m[1]) : Math.max(1, ...(state.completedSteps ?? [0]))
 
+  // Zero screen gets full-viewport layout (no Shell) — match /onboarding exactly
+  const isZeroScreen = /^\/onboarding\/?$/.test(pathname) || (!m && !pathname.includes("step-"))
+
+  if (isZeroScreen) {
+    return <>{children}</>
+  }
+
   return (
     <Shell
       files={files}
