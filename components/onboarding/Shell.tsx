@@ -48,11 +48,22 @@ export function Shell({
 
   return (
     <StreamContext.Provider value={{ liveStreams, setLiveStreams, selectedSkillId, setSelectedSkillId }}>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen overflow-hidden bg-background">
+        {/* Rail — 180px, minimal step list */}
         <ProgressRail completedSteps={completedSteps} />
-        <main className="flex-1 flex flex-col overflow-hidden bg-background min-w-0">
-          <div className="flex-1 overflow-auto">{children}</div>
+
+        {/* Center — form area, constrained width, centered */}
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0 border-r border-border">
+          <div className="flex-1 overflow-auto">
+            <div className="min-h-full flex flex-col items-center justify-start px-8 py-10">
+              <div className="w-full max-w-[480px]">
+                {children}
+              </div>
+            </div>
+          </div>
         </main>
+
+        {/* Live Graph — 460px+, hero panel */}
         <ActivityPane
           files={files}
           completedSteps={completedSteps}
