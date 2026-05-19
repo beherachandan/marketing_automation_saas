@@ -28,3 +28,19 @@ export async function sendMagicLink(
     return { ok: false, error: e instanceof Error ? e.message : "Unable to send magic link" }
   }
 }
+
+export async function signInWithPassword(
+  email: string,
+  password: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (isDevBypass()) return { ok: true }
+
+  try {
+    const supabase = await getSupabaseServerClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Sign in failed" }
+  }
+}
