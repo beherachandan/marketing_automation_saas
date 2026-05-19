@@ -17,7 +17,7 @@ export default function LandingPage() {
         </p>
         <div className="flex gap-3">
           <Link
-            href="/onboarding/step-1"
+            href="/onboarding"
             className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-primary-foreground shadow-sm hover:opacity-90 transition"
           >
             Start onboarding

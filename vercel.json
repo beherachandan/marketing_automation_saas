@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/eod-memory",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-discovery",
+      "schedule": "0 5 * * 1"
+    },
+    {
+      "path": "/api/cron/monthly-citation",
+      "schedule": "0 6 1 * *"
+    },
+    {
+      "path": "/api/cron/monthly-rubric",
+      "schedule": "30 6 1 * *"
+    }
+  ],
+  "functions": {
+    "app/api/cron/*/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/audit/demo/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/slack/commands/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}

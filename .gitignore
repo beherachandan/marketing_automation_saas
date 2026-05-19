@@ -13,3 +13,10 @@ build
 coverage
 .idea
 .vscode
+.scratch
+*.png
+*.jpg
+*.jpeg
+*.gif
+.playwright-mcp/
+tsconfig.tsbuildinfo

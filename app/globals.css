@@ -33,6 +33,20 @@
     --ring: 240 10% 3.9%;
 
     --radius: 0.375rem;
+
+    /* Brand — indigo-violet ramp */
+    --brand-50: 243 100% 97%;
+    --brand-100: 243 96% 93%;
+    --brand-200: 243 93% 86%;
+    --brand-500: 243 75% 59%;
+    --brand-600: 243 72% 52%;
+    --brand-900: 243 60% 18%;
+
+    /* Activity pane — dark panel */
+    --activity-bg: 224 15% 14%;
+    --activity-border: 224 12% 22%;
+    --activity-text: 220 15% 82%;
+    --activity-muted: 220 8% 52%;
   }
 
   .dark {

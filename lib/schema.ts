@@ -1,9 +1,29 @@
 import { z } from "zod"
 
-export const streamEnum = z.enum(["SEO", "AEO", "GEO", "Paid"])
+export const streamEnum = z.enum(["SEO", "AEO/GEO", "Paid"])
+
+// Skill definitions — derived from stream selection, not stored separately
+export const SKILL_DEFS = [
+  { id: "keyword-research",  label: "Keyword Research",         icon: "🔍", streams: ["SEO", "AEO/GEO"], enrichedByStep: 6 },
+  { id: "trend-discovery",   label: "Trend Discovery",          icon: "📈", streams: ["SEO", "AEO/GEO"], enrichedByStep: 6 },
+  { id: "sitemap-audit",     label: "Sitemap Audit",            icon: "🗺️", streams: ["SEO"],            enrichedByStep: 5 },
+  { id: "on-page-audit",     label: "On-page SEO Audit",        icon: "📋", streams: ["SEO"],            enrichedByStep: 5 },
+  { id: "citation-audit",    label: "Citation Audit",           icon: "🔗", streams: ["AEO/GEO"],        enrichedByStep: 5 },
+  { id: "content-rubric",    label: "Content Rubric",           icon: "📊", streams: ["AEO/GEO"],        enrichedByStep: 5 },
+  { id: "ai-draft",          label: "AI Draft Generation",      icon: "✍️", streams: ["AEO/GEO"],        enrichedByStep: 4 },
+  { id: "brand-voice",       label: "Brand Voice Enforcement",  icon: "🎨", streams: ["AEO/GEO"],        enrichedByStep: 4 },
+  { id: "ad-copy",           label: "Ad Copy Generation",       icon: "💰", streams: ["Paid"],           enrichedByStep: 3 },
+  { id: "lp-audit",          label: "Landing Page Audit",       icon: "🎯", streams: ["Paid"],           enrichedByStep: 5 },
+] as const
 
 export const step1Schema = z.object({
   workspace: z.string().min(2).max(64),
+  website: z
+    .string()
+    .trim()
+    .url("Enter a full URL like https://example.com")
+    .optional()
+    .or(z.literal("")),
   agent: z.object({
     name: z.string().min(1).max(64),
     role: z.string().min(1).max(128),
@@ -20,6 +40,77 @@ export const featureSchema = z.object({
   title: z.string().min(1).max(80),
   description: z.string().min(1).max(400),
 })
+
+export const productLineSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+  summary: z.string(),
+  url: z.string(),
+  category: z.string().optional(),
+  evidence: z.array(z.string()).default([]),
+  features: z.array(featureSchema).default([]),
+  suggestedIcps: z
+    .array(
+      z.object({
+        name: z.string(),
+        role: z.string(),
+        industry: z.string(),
+      }),
+    )
+    .default([]),
+  source: z.enum(["llm", "stub"]).default("stub"),
+})
+export type ProductLine = z.infer<typeof productLineSchema>
+
+export const scannedHintsSchema = z.object({
+  url: z.string(),
+  scannedAt: z.string(),
+  ok: z.boolean(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  ogImage: z.string().optional(),
+  ogSiteName: z.string().optional(),
+  headings: z.array(z.string()).optional(),
+  crawledUrls: z.array(z.string()).optional(),
+  productLines: z.array(productLineSchema).optional(),
+  selectedProductSlugs: z.array(z.string()).optional(),
+  suggestedProduct: z
+    .object({
+      name: z.string().optional(),
+      category: z.string().optional(),
+      oneLiner: z.string().optional(),
+      longDescription: z.string().optional(),
+      features: z.array(featureSchema).optional(),
+      positioning: z.string().optional(),
+    })
+    .optional(),
+  suggestedSeeds: z.array(z.string()).optional(),
+  suggestedIcps: z
+    .array(
+      z.object({
+        name: z.string(),
+        role: z.string(),
+        industry: z.string(),
+      }),
+    )
+    .optional(),
+  suggestedBrandVoice: z
+    .object({
+      tone: z
+        .object({
+          formalCasual: z.number(),
+          authoritativeFriendly: z.number(),
+          technicalConversational: z.number(),
+          playfulSerious: z.number(),
+        })
+        .optional(),
+      attributes: z.array(z.string()).optional(),
+      goodExample: z.string().optional(),
+    })
+    .optional(),
+  error: z.string().optional(),
+})
+export type ScannedHints = z.infer<typeof scannedHintsSchema>
 
 export const step2Schema = z.object({
   product: z.object({
@@ -100,6 +191,7 @@ export const step7Schema = z.object({
     teamId: z.string().optional(),
     channelId: z.string().optional(),
     channelName: z.string().optional(),
+    botName: z.string().min(1).max(32).default("conduct"),
   }),
   semrush: z.object({
     apiKey: z.string().optional(),

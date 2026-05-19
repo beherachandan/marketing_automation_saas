@@ -9,7 +9,8 @@ import type {
   OnboardingState,
 } from "./schema"
 
-function esc(s: string): string {
+function esc(s: string | undefined | null): string {
+  if (s == null) return ""
   return s.replace(/\r\n/g, "\n").trim()
 }
 
@@ -35,10 +36,16 @@ export function toUserMd(s: Step1): string {
 export function toToolsMd(s7: Step7): string {
   return `# TOOLS
 
+**Slack bot name:** @${esc(s7.slack.botName ?? "conduct")}
 **Slack channel ID:** ${s7.slack.channelId ?? "not configured"}
 **Slack channel name:** ${s7.slack.channelName ?? "not configured"}
 **CMS provider:** ${s7.cms.provider}
 **CMS site ID:** ${s7.cms.siteId ?? "n/a"}
+
+## Slack invocation
+
+- Audit a page: \`@${esc(s7.slack.botName ?? "conduct")} audit <url>\`
+- Draft an article: \`@${esc(s7.slack.botName ?? "conduct")} draft <topic>\`
 `
 }
 

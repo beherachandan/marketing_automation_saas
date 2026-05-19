@@ -55,6 +55,20 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        brand: {
+          50: "hsl(var(--brand-50))",
+          100: "hsl(var(--brand-100))",
+          200: "hsl(var(--brand-200))",
+          500: "hsl(var(--brand-500))",
+          600: "hsl(var(--brand-600))",
+          900: "hsl(var(--brand-900))",
+        },
+        activity: {
+          bg: "hsl(var(--activity-bg))",
+          border: "hsl(var(--activity-border))",
+          text: "hsl(var(--activity-text))",
+          muted: "hsl(var(--activity-muted))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
