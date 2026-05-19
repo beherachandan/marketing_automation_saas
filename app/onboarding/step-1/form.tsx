@@ -158,7 +158,7 @@ export function Step1Form({ initial }: { initial?: Step1 }) {
 
       {serverError && <p className="text-destructive text-[13px]">{serverError}</p>}
 
-      <Footer currentStep={1} onContinue={() => submit()} saving={isPending} />
+      <Footer currentStep={1} onContinue={submit} saving={isPending} />
     </form>
   )
 }

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import type { Step1, ScannedHints } from "@/lib/schema"
 import { SetupForm } from "./setup-form"
-import { ZeroHero } from "@/components/onboarding/ZeroHero"
+import { ZeroHero, type ScanState, type ScanLine } from "@/components/onboarding/ZeroHero"
 
 interface ZeroPageProps {
   initial: {
@@ -14,12 +15,35 @@ interface ZeroPageProps {
   scannedHints?: ScannedHints | null
 }
 
-// Thin shell — shares live stream + website state between left form and right hero
 export function ZeroPage({ initial, scannedHints }: ZeroPageProps) {
+  const router = useRouter()
   const [liveStreams, setLiveStreams] = useState<Step1["agent"]["streams"]>(
     initial.streams.length > 0 ? initial.streams : ["AEO/GEO"],
   )
   const [liveWebsite, setLiveWebsite] = useState(initial.website)
+  const [scanState, setScanState] = useState<ScanState>({ phase: "idle" })
+
+  const handleScanStart = useCallback((website: string) => {
+    setScanState({ phase: "scanning", lines: [], website })
+  }, [])
+
+  const handleScanLine = useCallback((line: ScanLine) => {
+    setScanState((prev) => {
+      if (prev.phase !== "scanning") return prev
+      return { ...prev, lines: [...prev.lines, line].slice(-30) }
+    })
+  }, [])
+
+  const handleScanDone = useCallback((hints: ScannedHints, website: string) => {
+    setScanState({ phase: "done", lines: [], hints, website })
+  }, [])
+
+  const handleScanError = useCallback((error: string) => {
+    setScanState((prev) => {
+      if (prev.phase !== "scanning") return { phase: "error", lines: [], error, website: "" }
+      return { phase: "error", lines: prev.lines, error, website: prev.website }
+    })
+  }, [])
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -33,7 +57,6 @@ export function ZeroPage({ initial, scannedHints }: ZeroPageProps) {
 
         {/* form content */}
         <div className="flex-1 px-10 pt-10 pb-12 flex flex-col max-w-[540px]">
-          {/* heading */}
           <div className="mb-8">
             <p className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground mb-2">
               Step 0 of 8
@@ -51,6 +74,10 @@ export function ZeroPage({ initial, scannedHints }: ZeroPageProps) {
             scannedHints={scannedHints}
             onStreamsChange={setLiveStreams}
             onWebsiteChange={setLiveWebsite}
+            onScanStart={handleScanStart}
+            onScanLine={handleScanLine}
+            onScanDone={handleScanDone}
+            onScanError={handleScanError}
           />
         </div>
       </div>
@@ -61,7 +88,12 @@ export function ZeroPage({ initial, scannedHints }: ZeroPageProps) {
           <p className="text-[11px] uppercase tracking-widest font-medium text-muted-foreground mb-6">
             Your agent preview
           </p>
-          <ZeroHero streams={liveStreams} website={liveWebsite} />
+          <ZeroHero
+            streams={liveStreams}
+            website={liveWebsite}
+            scanState={scanState}
+            onContinue={() => router.push("/onboarding/step-1")}
+          />
         </div>
       </div>
     </div>

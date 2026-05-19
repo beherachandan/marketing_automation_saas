@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react"
+import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { saveStep1 } from "@/lib/persist-actions"
 import { saveSelectedProductLines } from "@/lib/persist-actions"
@@ -66,9 +66,13 @@ interface SetupFormProps {
   scannedHints?: ScannedHints | null
   onStreamsChange?: (s: Step1["agent"]["streams"]) => void
   onWebsiteChange?: (url: string) => void
+  onScanStart?: (website: string) => void
+  onScanLine?: (line: ScanLine) => void
+  onScanDone?: (hints: ScannedHints, website: string) => void
+  onScanError?: (error: string) => void
 }
 
-export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteChange }: SetupFormProps) {
+export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteChange, onScanStart, onScanLine, onScanDone, onScanError }: SetupFormProps) {
   const router = useRouter()
   const { setLiveStreams, setSelectedSkillId } = useStreamContext()
   const [workspace, setWorkspace] = useState(initial.workspace)
@@ -82,22 +86,22 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
   const [justActivated, setJustActivated] = useState<Set<string>>(new Set())
 
   // Scan state
-  const [scanning, setScanning] = useState(false)
-  const [scanLines, setScanLines] = useState<ScanLine[]>([])
-  const [scanDone, setScanDone] = useState(false)
   const [scanErr, setScanErr] = useState<string | null>(null)
-  const [activeDestinations, setActiveDestinations] = useState<Set<string>>(new Set())
   const [, startTransition] = useTransition()
   const abortRef = useRef<AbortController | null>(null)
-  const scanEndRef = useRef<HTMLDivElement>(null)
+  const websiteRef = useRef(initial.website)
+  // Stable refs so memoized runScan always sees latest callbacks
+  const onScanStartRef = useRef(onScanStart)
+  const onScanLineRef = useRef(onScanLine)
+  const onScanDoneRef = useRef(onScanDone)
+  const onScanErrorRef = useRef(onScanError)
+  onScanStartRef.current = onScanStart
+  onScanLineRef.current = onScanLine
+  onScanDoneRef.current = onScanDone
+  onScanErrorRef.current = onScanError
 
   // Detect if site was previously scanned (item 7)
   const alreadyScanned = scannedHints?.url === website.trim() && scannedHints?.ok === true
-
-  // Auto-scroll scan feed
-  useEffect(() => {
-    scanEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-  }, [scanLines])
 
   // Compute active skills from selected streams (deduped)
   const activeSkills = useMemo(() => {
@@ -149,14 +153,11 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
     return Object.keys(errs).length === 0
   }
 
-  const addLine = (line: ScanLine) =>
-    setScanLines((prev) => [...prev, line].slice(-20))
+  const addLine = (line: ScanLine) => onScanLineRef.current?.(line)
 
   const runScan = useMemo(() => async (url: string) => {
-    setScanLines([])
-    setScanDone(false)
     setScanErr(null)
-    setActiveDestinations(new Set())
+    onScanStartRef.current?.(url)
     const ctrl = new AbortController()
     abortRef.current = ctrl
     addLine({ text: `Scanning ${url}…`, icon: "🔭" })
@@ -193,6 +194,7 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
       const msg = e instanceof Error ? e.message : "Scan failed"
       setScanErr(msg)
       addLine({ text: `Error: ${msg}`, ok: false })
+      onScanErrorRef.current?.(msg)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -219,14 +221,6 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
           text: shortPath(ev.url),
           ok: ev.ok,
         })
-        // Activate matching destinations for live card animation (item 6)
-        if (ev.ok && label?.dest) {
-          setActiveDestinations((prev) => {
-            const next = new Set(prev)
-            next.add(label.dest!)
-            return next
-          })
-        }
         break
       }
       case "extract_start":
@@ -239,25 +233,22 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
           ok: true,
         })
         addLine({ text: "→ Product, ICPs, Brand voice, Seeds pre-filled", icon: "✦", ok: true })
-        // All destinations filled on extract_done
-        setActiveDestinations(new Set(["Product", "ICPs", "Brand voice", "Seeds"]))
         break
       case "done":
-        setScanDone(true)
-        addLine({ text: "Done — navigating to step 1…", icon: "✓", ok: true })
-        // Save selected product lines as empty (take-all)
+        addLine({ text: "Scan complete", icon: "✓", ok: true })
         startTransition(async () => {
           try {
             await saveSelectedProductLines([])
-            router.push("/onboarding/step-1")
           } catch (e) {
             setScanErr(e instanceof Error ? e.message : "Save failed")
           }
+          onScanDoneRef.current?.(ev.hints, websiteRef.current)
         })
         break
       case "error":
         setScanErr(ev.error)
         addLine({ text: `Error: ${ev.error}`, ok: false })
+        onScanErrorRef.current?.(ev.error)
         break
     }
   }
@@ -281,7 +272,6 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
     }
     const hasWebsite = !!website.trim()
     if (hasWebsite) {
-      setScanning(true)
       runScan(website.trim())
     } else {
       router.push("/onboarding/step-1")
@@ -291,117 +281,6 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
   const handleContinue = async () => {
     if (!validate()) return
     await saveAndScan()
-  }
-
-  if (scanning) {
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-[13px] font-medium">Reading your site</span>
-            <span className="font-mono text-[11px] text-muted-foreground truncate max-w-[200px]">{website}</span>
-          </div>
-          <div className="p-4 max-h-72 overflow-auto font-mono text-[11px] space-y-1.5">
-            {scanLines.map((line, i) => (
-              <div key={i} className={cn("flex items-start gap-2", line.ok === false && "text-destructive")}>
-                {line.icon && (
-                  <span className="shrink-0 w-4 text-center text-muted-foreground">{line.icon}</span>
-                )}
-                <span className={cn("flex-1", !line.icon && "pl-6")}>
-                  {line.url ? (
-                    <>
-                      <span className="text-muted-foreground">{line.text}</span>
-                      {line.dest && (
-                        <span className="ml-2 text-[10px] bg-primary/10 text-primary px-1.5 py-px rounded">
-                          → {line.dest}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className={line.ok ? "text-foreground" : ""}>{line.text}</span>
-                  )}
-                </span>
-              </div>
-            ))}
-            {!scanDone && !scanErr && (
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="w-4 text-center">…</span>
-                <LoadingDots />
-              </div>
-            )}
-            <div ref={scanEndRef} />
-          </div>
-        </div>
-
-        {scanErr && (
-          <div className="flex items-center gap-3">
-            <p className="text-destructive text-[13px]">Scan failed: {scanErr}</p>
-            <button
-              type="button"
-              onClick={() => { setScanErr(null); runScan(website.trim()) }}
-              className="text-[12px] underline text-muted-foreground"
-            >
-              Retry
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/onboarding/step-1")}
-              className="text-[12px] underline text-muted-foreground"
-            >
-              Skip scan
-            </button>
-          </div>
-        )}
-
-        {/* Destination summary cards — animate as scan populates them, cap at 65% */}
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { icon: "📦", label: "Product", step: "Step 2" },
-            { icon: "👥", label: "ICPs", step: "Step 3" },
-            { icon: "🎨", label: "Brand voice", step: "Step 4" },
-            { icon: "🌱", label: "Seeds", step: "Step 6" },
-          ].map(({ icon, label, step }) => {
-            const isActive = activeDestinations.has(label)
-            const showFilled = scanDone || isActive
-            const pct = showFilled ? 65 : 0
-            return (
-              <div
-                key={label}
-                className={cn(
-                  "flex flex-col gap-1.5 rounded-md border px-3 py-2 transition-all duration-500",
-                  showFilled ? "border-primary/30 bg-primary/5 shadow-sm" : "border-border bg-muted/30",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <span className={cn("text-base transition-all duration-300", isActive && !scanDone && "animate-pulse")}>
-                    {icon}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium truncate">{label}</p>
-                    <p className="text-[10px] text-muted-foreground">{step}</p>
-                  </div>
-                  <span className={cn(
-                    "text-[10px] font-mono tabular-nums shrink-0",
-                    showFilled ? "text-primary font-medium" : "text-muted-foreground/50",
-                  )}>
-                    {pct}%
-                  </span>
-                </div>
-                <div className="h-0.5 w-full rounded-full overflow-hidden bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-700"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                {showFilled && (
-                  <p className="text-[9px] text-muted-foreground/60">improves as you complete steps</p>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -420,7 +299,7 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
             placeholder="https://acme.com"
             className="h-10 text-[14px]"
             value={website}
-            onChange={(e) => { setWebsite(e.target.value); onWebsiteChange?.(e.target.value) }}
+            onChange={(e) => { setWebsite(e.target.value); websiteRef.current = e.target.value; onWebsiteChange?.(e.target.value) }}
           />
           {errors.website && <FieldError message={errors.website} />}
         </div>
