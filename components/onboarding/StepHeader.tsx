@@ -1,18 +1,19 @@
 import { cn } from "@/lib/cn"
+import { Building2, ScanSearch, Package, Users, Palette, Target, Sprout, Plug, Rocket } from "lucide-react"
 
 const STEP_META: Record<
   string,
-  { icon: string; color: string; milestone: string }
+  { icon: React.ReactNode; color: string; milestone: string }
 > = {
-  "1":         { icon: "🏢", color: "bg-violet-500/10 text-violet-600", milestone: "Identity" },
-  "1-discover":{ icon: "🔭", color: "bg-sky-500/10 text-sky-600",       milestone: "Identity" },
-  "2":         { icon: "📦", color: "bg-blue-500/10 text-blue-600",      milestone: "Identity" },
-  "3":         { icon: "👥", color: "bg-indigo-500/10 text-indigo-600",  milestone: "Configure" },
-  "4":         { icon: "🎨", color: "bg-pink-500/10 text-pink-600",      milestone: "Configure" },
-  "5":         { icon: "🎯", color: "bg-orange-500/10 text-orange-600",  milestone: "Configure" },
-  "6":         { icon: "🌱", color: "bg-green-500/10 text-green-600",    milestone: "Configure" },
-  "7":         { icon: "🔌", color: "bg-teal-500/10 text-teal-600",      milestone: "Launch" },
-  "8":         { icon: "🚀", color: "bg-brand-100 text-brand-600",       milestone: "Launch" },
+  "1":         { icon: <Building2 />, color: "bg-violet-500/10 text-violet-600", milestone: "Identity" },
+  "1-discover":{ icon: <ScanSearch />, color: "bg-sky-500/10 text-sky-600",       milestone: "Identity" },
+  "2":         { icon: <Package />,    color: "bg-blue-500/10 text-blue-600",      milestone: "Identity" },
+  "3":         { icon: <Users />,      color: "bg-indigo-500/10 text-indigo-600",  milestone: "Configure" },
+  "4":         { icon: <Palette />,    color: "bg-pink-500/10 text-pink-600",      milestone: "Configure" },
+  "5":         { icon: <Target />,     color: "bg-orange-500/10 text-orange-600",  milestone: "Configure" },
+  "6":         { icon: <Sprout />,     color: "bg-green-500/10 text-green-600",    milestone: "Configure" },
+  "7":         { icon: <Plug />,       color: "bg-teal-500/10 text-teal-600",      milestone: "Launch" },
+  "8":         { icon: <Rocket />,     color: "bg-brand-100 text-brand-600",       milestone: "Launch" },
 }
 
 export function StepHeader({
@@ -32,7 +33,7 @@ export function StepHeader({
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-4">
-        <span className={cn("inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl", meta.color)}>
+        <span className={cn("inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl [&>svg]:h-5 [&>svg]:w-5", meta.color)}>
           {meta.icon}
         </span>
         <div className="flex flex-col gap-0.5">

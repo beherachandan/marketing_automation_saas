@@ -21,7 +21,7 @@ export async function runAudit(workspaceId: string, url: string): Promise<AuditR
   const system = [
     buildSystemPreamble(files),
     ``,
-    `You are the AEO evaluator. You score the page below against the rubric dimensions and their weights.`,
+    `You are the GEO evaluator. You score the page below against the rubric dimensions and their weights.`,
     `For each dimension, produce a 0–10 score (10 = rubric-perfect) and a one-line reason.`,
     `Compute the weighted total on a 0–10 scale using: sum(score_i * weight_i) / 100.`,
     `Reply with valid JSON matching this shape exactly — nothing before or after:`,
@@ -90,7 +90,7 @@ export async function runAudit(workspaceId: string, url: string): Promise<AuditR
 
 async function fetchPage(url: string): Promise<string> {
   const res = await fetch(url, {
-    headers: { "user-agent": "ConductBot/1.0 (+https://conduct.app)" },
+    headers: { "user-agent": "WaymarkBot/1.0 (+https://waymark.app)" },
     redirect: "follow",
   })
   if (!res.ok) throw new Error(`Fetch failed ${res.status} for ${url}`)

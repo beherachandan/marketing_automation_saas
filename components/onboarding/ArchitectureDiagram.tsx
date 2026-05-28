@@ -14,7 +14,6 @@ import {
 import "@xyflow/react/dist/style.css"
 import { cn } from "@/lib/cn"
 import { SKILL_DEFS } from "@/lib/schema"
-import { SKILL_COLORS } from "./SkillCard"
 import type { Step1 } from "@/lib/schema"
 
 type SkillDef = typeof SKILL_DEFS[number]
@@ -22,12 +21,25 @@ type SkillDef = typeof SKILL_DEFS[number]
 // ─── node data ────────────────────────────────────────────────────────────────
 
 type AgentNodeData = {
-  kind: "orchestrator" | "stream-agent" | "skill-chip"
+  kind: "orchestrator" | "stream-agent"
   label: string
-  icon: string
   streamId?: string
-  skillId?: string
+  active: boolean
+  enriched: boolean
   onClickNode: (id: string) => void
+}
+
+// Step → which stream agents are "in focus"
+const STEP_FOCUS: Record<number, string[]> = {
+  0: ["SEO", "AEO/GEO", "Paid"],
+  1: ["SEO", "AEO/GEO", "Paid"],
+  2: ["AEO/GEO"],
+  3: ["AEO/GEO", "Paid"],
+  4: ["AEO/GEO"],
+  5: ["SEO", "AEO/GEO"],
+  6: ["SEO", "AEO/GEO"],
+  7: ["SEO", "AEO/GEO", "Paid"],
+  8: ["SEO", "AEO/GEO", "Paid"],
 }
 
 // ─── custom node ─────────────────────────────────────────────────────────────
@@ -43,9 +55,14 @@ function AgentNode({ id, data }: NodeProps) {
         <button
           type="button"
           onClick={handleClick}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-100 border-2 border-violet-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 shadow-sm transition-all cursor-pointer",
+            d.active
+              ? "bg-violet-100 border-violet-300 hover:shadow-md"
+              : "bg-muted/30 border-border/40 opacity-40 grayscale",
+          )}
         >
-          <span className="text-lg">{d.icon}</span>
+          <span className="text-lg">🤖</span>
           <div className="text-left">
             <p className="text-[12px] font-semibold text-violet-800 leading-tight">{d.label}</p>
             <p className="text-[9px] text-violet-500 font-mono">SOUL.md · orchestrator</p>
@@ -55,53 +72,41 @@ function AgentNode({ id, data }: NodeProps) {
     )
   }
 
-  const streamColors: Record<string, string> = {
-    SEO:      "border-blue-300 bg-blue-50 text-blue-800",
-    "AEO/GEO":"border-emerald-300 bg-emerald-50 text-emerald-800",
-    Paid:     "border-amber-300 bg-amber-50 text-amber-800",
+  const streamColors: Record<string, { active: string; dim: string }> = {
+    SEO:      { active: "border-blue-300 bg-blue-50 text-blue-800",       dim: "border-border/30 bg-muted/20 text-muted-foreground/40" },
+    "AEO/GEO":{ active: "border-emerald-300 bg-emerald-50 text-emerald-800", dim: "border-border/30 bg-muted/20 text-muted-foreground/40" },
+    Paid:     { active: "border-amber-300 bg-amber-50 text-amber-800",     dim: "border-border/30 bg-muted/20 text-muted-foreground/40" },
   }
-  const colorClass = streamColors[d.streamId ?? ""] ?? "border-border bg-white text-foreground"
-
-  if (d.kind === "stream-agent") {
-    return (
-      <>
-        <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
-        <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
-        <button
-          type="button"
-          onClick={handleClick}
-          className={cn(
-            "flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-sm hover:shadow-md transition-shadow cursor-pointer",
-            colorClass,
-          )}
-        >
-          <span className="text-base">{d.icon}</span>
-          <div className="text-left">
-            <p className="text-[11px] font-semibold leading-tight">{d.label}</p>
-            <p className="text-[9px] font-mono opacity-60">{d.streamId}</p>
-          </div>
-        </button>
-      </>
-    )
+  const streamIcons: Record<string, string> = {
+    SEO: "🔍", "AEO/GEO": "📡", Paid: "💰",
   }
 
-  // skill-chip
-  const skillColor = SKILL_COLORS[d.skillId ?? ""] ?? SKILL_COLORS["keyword-research"]
+  const colors = streamColors[d.streamId ?? ""] ?? streamColors["SEO"]
+  const colorClass = d.active ? colors.active : colors.dim
+
   return (
     <>
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
       <button
         type="button"
         onClick={handleClick}
         className={cn(
-          "flex items-center gap-1.5 px-2 py-1.5 rounded-md border text-left hover:shadow-sm transition-shadow cursor-pointer",
-          skillColor.bg, skillColor.border,
+          "flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-sm transition-all cursor-pointer",
+          d.active ? "hover:shadow-md" : "cursor-default grayscale",
+          colorClass,
         )}
       >
-        <span className="text-sm">{d.icon}</span>
-        <p className={cn("text-[10px] font-medium truncate max-w-[90px]", skillColor.countText)}>
-          {d.label}
-        </p>
+        <span className="text-base">{streamIcons[d.streamId ?? ""] ?? "⚙️"}</span>
+        <div className="text-left">
+          <div className="flex items-center gap-1.5">
+            <p className="text-[11px] font-semibold leading-tight">{d.label}</p>
+            {d.enriched && (
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+            )}
+          </div>
+          <p className="text-[9px] font-mono opacity-60">{d.streamId}</p>
+        </div>
       </button>
     </>
   )
@@ -112,105 +117,109 @@ const nodeTypes = { agentNode: AgentNode }
 // ─── node / edge builders ─────────────────────────────────────────────────────
 
 const STREAM_AGENTS = [
-  { id: "seo-agent",  label: "SEO Agent",     icon: "🔍", streamId: "SEO",      x: 20 },
-  { id: "aeo-agent",  label: "AEO/GEO Agent", icon: "📡", streamId: "AEO/GEO",  x: 200 },
-  { id: "paid-agent", label: "Paid Agent",    icon: "💰", streamId: "Paid",     x: 380 },
+  { id: "seo-agent",  label: "SEO Agent",     streamId: "SEO",      x: 20  },
+  { id: "aeo-agent",  label: "AEO/GEO Agent", streamId: "AEO/GEO",  x: 200 },
+  { id: "paid-agent", label: "Paid Agent",    streamId: "Paid",     x: 380 },
 ]
 
+// Which step enriches which stream agent
+const STREAM_ENRICHED_BY: Record<string, number[]> = {
+  SEO:      [5, 6],
+  "AEO/GEO":[4, 5, 6],
+  Paid:     [3, 5],
+}
+
 function buildNodes(
-  activeSkills: SkillDef[],
   agentName: string,
+  activeStreams: string[],
+  currentStep: number,
+  completedSteps: number[],
   onClickNode: (id: string) => void,
 ): Node[] {
+  const focusStreams = STEP_FOCUS[currentStep] ?? STREAM_AGENTS.map((a) => a.streamId)
+
   const nodes: Node[] = [
     {
       id: "orchestrator",
       type: "agentNode",
       position: { x: 190, y: 10 },
-      data: { kind: "orchestrator", label: agentName || "Orchestrator", icon: "🤖", onClickNode },
+      data: {
+        kind: "orchestrator",
+        label: agentName || "Orchestrator",
+        active: true,
+        enriched: completedSteps.length > 0,
+        onClickNode,
+      },
     },
   ]
 
-  // Stream agent nodes
   for (const ag of STREAM_AGENTS) {
+    const isActiveStream = activeStreams.length === 0 || activeStreams.includes(ag.streamId)
+    const isFocused = focusStreams.includes(ag.streamId)
+    const enrichSteps = STREAM_ENRICHED_BY[ag.streamId] ?? []
+    const isEnriched = enrichSteps.some((s) => completedSteps.includes(s))
+
     nodes.push({
       id: ag.id,
       type: "agentNode",
       position: { x: ag.x, y: 120 },
-      data: { kind: "stream-agent", label: ag.label, icon: ag.icon, streamId: ag.streamId, onClickNode },
-    })
-  }
-
-  // Skill chip nodes — grouped under each stream agent
-  const byStream: Record<string, SkillDef[]> = { SEO: [], "AEO/GEO": [], Paid: [] }
-  for (const skill of activeSkills) {
-    const primary = skill.streams[0] as string
-    if (primary in byStream) byStream[primary].push(skill)
-  }
-
-  for (const ag of STREAM_AGENTS) {
-    const skills = byStream[ag.streamId] ?? []
-    skills.forEach((skill, i) => {
-      nodes.push({
-        id: skill.id,
-        type: "agentNode",
-        position: { x: ag.x - 20 + i * 115, y: 240 + Math.floor(i / 1) * 0 },
-        data: { kind: "skill-chip", label: skill.label, icon: skill.icon, skillId: skill.id, onClickNode },
-      })
+      data: {
+        kind: "stream-agent",
+        label: ag.label,
+        streamId: ag.streamId,
+        active: isActiveStream && isFocused,
+        enriched: isEnriched,
+        onClickNode,
+      },
     })
   }
 
   return nodes
 }
 
-function buildEdges(activeSkills: SkillDef[]): Edge[] {
-  const edges: Edge[] = []
-  for (const ag of STREAM_AGENTS) {
-    edges.push({
+function buildEdges(activeStreams: string[], currentStep: number): Edge[] {
+  const focusStreams = STEP_FOCUS[currentStep] ?? STREAM_AGENTS.map((a) => a.streamId)
+
+  return STREAM_AGENTS.map((ag) => {
+    const isActive =
+      (activeStreams.length === 0 || activeStreams.includes(ag.streamId)) &&
+      focusStreams.includes(ag.streamId)
+    return {
       id: `e-orch-${ag.id}`,
       source: "orchestrator",
       target: ag.id,
       type: "smoothstep",
-      animated: true,
-      style: { strokeWidth: 1.5, stroke: "#a1a1aa" },
-    })
-  }
-
-  const byStream: Record<string, SkillDef[]> = { SEO: [], "AEO/GEO": [], Paid: [] }
-  for (const skill of activeSkills) {
-    const primary = skill.streams[0] as string
-    if (primary in byStream) byStream[primary].push(skill)
-  }
-
-  for (const ag of STREAM_AGENTS) {
-    for (const skill of byStream[ag.streamId] ?? []) {
-      edges.push({
-        id: `e-${ag.id}-${skill.id}`,
-        source: ag.id,
-        target: skill.id,
-        type: "smoothstep",
-        style: { strokeWidth: 1, stroke: "#d4d4d8" },
-      })
+      animated: isActive,
+      style: {
+        strokeWidth: isActive ? 1.5 : 1,
+        stroke: isActive ? "#a1a1aa" : "#e4e4e7",
+        opacity: isActive ? 1 : 0.35,
+      },
     }
-  }
-
-  return edges
+  })
 }
 
 // ─── component ────────────────────────────────────────────────────────────────
 
 export function ArchitectureDiagram({
-  activeSkills,
+  activeSkills: _activeSkills,
   agentName,
+  streamsSelected,
+  currentStep = 1,
+  completedSteps = [],
   onEditSkill,
   onEditAgent,
 }: {
   activeSkills: SkillDef[]
   agentName?: string
   streamsSelected?: Step1["agent"]["streams"]
+  currentStep?: number
+  completedSteps?: number[]
   onEditSkill: (skillId: string) => void
   onEditAgent: (agentId: string) => void
 }) {
+  const activeStreams = (streamsSelected ?? []) as string[]
+
   const handleClickNode = useCallback(
     (id: string) => {
       const isSkill = SKILL_DEFS.some((s) => s.id === id)
@@ -221,12 +230,16 @@ export function ArchitectureDiagram({
   )
 
   const nodes = useMemo(
-    () => buildNodes(activeSkills, agentName ?? "Orchestrator", handleClickNode),
+    () => buildNodes(agentName ?? "Orchestrator", activeStreams, currentStep, completedSteps, handleClickNode),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeSkills, agentName],
+    [agentName, activeStreams, currentStep, completedSteps],
   )
 
-  const edges = useMemo(() => buildEdges(activeSkills), [activeSkills])
+  const edges = useMemo(
+    () => buildEdges(activeStreams, currentStep),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeStreams, currentStep],
+  )
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
@@ -235,7 +248,7 @@ export function ArchitectureDiagram({
         edges={edges}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.25 }}
         minZoom={0.4}
         maxZoom={1.5}
         nodesDraggable={false}

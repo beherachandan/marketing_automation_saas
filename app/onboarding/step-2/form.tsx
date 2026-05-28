@@ -9,6 +9,7 @@ import { saveStep2 } from "@/lib/persist-actions"
 import { Input, Textarea, Label, FieldError } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Footer } from "@/components/onboarding/Footer"
+import { useFieldAnnotation } from "@/lib/use-field-annotation"
 
 export function Step2Form({
   initial,
@@ -39,6 +40,15 @@ export function Step2Form({
 
   const { fields, append, remove } = useFieldArray({ control, name: "product.features" })
 
+  const ann = {
+    productName:        useFieldAnnotation(2, "product.name", "Product name"),
+    productCategory:    useFieldAnnotation(2, "product.category", "Category"),
+    productOneLiner:    useFieldAnnotation(2, "product.oneLiner", "One-liner"),
+    productLongDesc:    useFieldAnnotation(2, "product.longDescription", "Long description"),
+    features:           useFieldAnnotation(2, "features", "Key features"),
+    positioning:        useFieldAnnotation(2, "product.positioning", "Positioning statement"),
+  }
+
   const submit = handleSubmit((data) => {
     setErr(null)
     start(async () => {
@@ -62,25 +72,25 @@ export function Step2Form({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label required marker={mark(dirtyFields.product?.name)}>Product name</Label>
-          <Input {...register("product.name")} />
+          <Input {...register("product.name")} {...ann.productName} />
           <FieldError message={errors.product?.name?.message} />
         </div>
         <div>
           <Label required marker={mark(dirtyFields.product?.category)}>Category</Label>
-          <Input {...register("product.category")} placeholder="e.g. EdTech SaaS" />
+          <Input {...register("product.category")} placeholder="e.g. EdTech SaaS" {...ann.productCategory} />
           <FieldError message={errors.product?.category?.message} />
         </div>
       </div>
 
       <div>
         <Label required hint="10–160 chars" marker={mark(dirtyFields.product?.oneLiner)}>One-liner</Label>
-        <Input {...register("product.oneLiner")} placeholder="10–160 chars" />
+        <Input {...register("product.oneLiner")} placeholder="10–160 chars" {...ann.productOneLiner} />
         <FieldError message={errors.product?.oneLiner?.message} />
       </div>
 
       <div>
         <Label required hint="50–4000 chars" marker={mark(dirtyFields.product?.longDescription)}>Long description</Label>
-        <Textarea rows={6} {...register("product.longDescription")} />
+        <Textarea rows={6} {...register("product.longDescription")} {...ann.productLongDesc} />
         <FieldError message={errors.product?.longDescription?.message} />
       </div>
 
@@ -117,7 +127,7 @@ export function Step2Form({
 
       <div>
         <Label required hint="20–2000 chars" marker={mark(dirtyFields.product?.positioning)}>Positioning statement</Label>
-        <Textarea rows={4} {...register("product.positioning")} />
+        <Textarea rows={4} {...register("product.positioning")} {...ann.positioning} />
         <FieldError message={errors.product?.positioning?.message} />
       </div>
 

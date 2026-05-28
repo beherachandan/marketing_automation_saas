@@ -51,7 +51,7 @@ export function ZeroPage({ initial, scannedHints }: ZeroPageProps) {
       <div className="flex-[55] flex flex-col min-h-screen border-r border-border">
         {/* top bar */}
         <div className="px-10 pt-8 pb-0 flex items-center gap-3">
-          <span className="text-[14px] font-semibold tracking-tight text-foreground">Conduct</span>
+          <span className="text-[14px] font-semibold tracking-tight text-foreground">Waymark</span>
           <span className="text-[11px] text-muted-foreground font-mono">/ setup</span>
         </div>
 

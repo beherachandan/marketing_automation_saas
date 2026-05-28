@@ -76,9 +76,12 @@ export async function localSaveStep<N extends 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(
   // @ts-expect-error dynamic step assignment
   s.steps[`step${n}`] = data
   s.onboarding_step = Math.max(n, s.onboarding_step)
-  if (!s.completed_steps.includes(n)) {
-    s.completed_steps = [...s.completed_steps, n].sort((a, b) => a - b)
+  // Rebuild: keep predecessors that have data + current step; drop all successors
+  const predecessorsWithData: number[] = []
+  for (let i = 1; i < n; i++) {
+    if (s.steps[`step${i}` as keyof typeof s.steps]) predecessorsWithData.push(i)
   }
+  s.completed_steps = [...predecessorsWithData, n].sort((a, b) => a - b)
   if (
     s.steps.step1 &&
     s.steps.step2 &&

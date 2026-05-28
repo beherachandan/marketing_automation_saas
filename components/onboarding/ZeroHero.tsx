@@ -134,15 +134,15 @@ export function ZeroHero({
   if (scanState.phase === "done") {
     const hints = scanState.hints
     const crawled = hints.crawledUrls ?? []
-    const productLines = hints.productLines ?? []
+    const hasBrandVoice = !!hints.suggestedBrandVoice
     const prefilled = [
-      productLines.length > 0 && "Product lines",
       "Brand voice",
       "ICP signals",
       crawled.length > 0 && "Seed topics",
     ].filter(Boolean) as string[]
 
     return (
+      <>
       <div className="flex flex-col gap-4">
         {/* Summary card */}
         <div className="rounded-xl border border-border bg-white overflow-hidden">
@@ -170,38 +170,103 @@ export function ZeroHero({
               </div>
             </div>
 
-            {/* URLs visited */}
+            {/* URLs visited — max 3 */}
             {crawled.length > 0 && (
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-medium text-muted-foreground mb-1.5">
                   Pages scanned
                 </p>
-                <div className="max-h-28 overflow-auto space-y-0.5">
-                  {crawled.slice(0, 12).map((url) => (
+                <div className="space-y-0.5">
+                  {crawled.slice(0, 3).map((url) => (
                     <p key={url} className="font-mono text-[10px] text-muted-foreground truncate">{url}</p>
                   ))}
-                  {crawled.length > 12 && (
-                    <p className="text-[10px] text-muted-foreground/60">+{crawled.length - 12} more</p>
+                  {crawled.length > 3 && (
+                    <p className="text-[10px] text-muted-foreground/60">+{crawled.length - 3} more</p>
                   )}
                 </div>
               </div>
             )}
+          </div>
+        </div>
 
-            {/* Product lines found */}
-            {productLines.length > 0 && (
-              <div>
-                <p className="text-[10px] uppercase tracking-widest font-medium text-muted-foreground mb-1.5">
-                  Product lines detected
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {productLines.slice(0, 6).map((pl) => (
-                    <span key={pl.slug} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/8 text-primary border border-primary/20">
-                      {pl.name}
+        {/* Agent preview — non-editable, brand voice shows scan data signal */}
+        <div>
+          <p className="text-[10px] uppercase tracking-widest font-medium text-muted-foreground mb-2">
+            Agent preview
+          </p>
+          <div className="flex flex-col gap-2">
+            {(["SEO", "AEO/GEO", "Paid"] as const).map((stream) => {
+              const meta = STREAM_META[stream]
+              const isActive = streams.includes(stream as Step1["agent"]["streams"][number])
+              const skills = SKILL_DEFS.filter((sk) => sk.streams[0] === stream)
+              return (
+                <motion.div
+                  key={stream}
+                  animate={{ opacity: isActive ? 1 : 0.3 }}
+                  transition={{ duration: 0.25 }}
+                  className={cn(
+                    "rounded-xl border p-3 transition-colors",
+                    isActive ? cn(meta.bg, meta.border) : "bg-surface border-border",
+                  )}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={cn("text-[11px] font-semibold", isActive ? meta.color : "text-muted-foreground")}>
+                      {meta.label}
                     </span>
-                  ))}
-                </div>
-              </div>
-            )}
+                    <span className="ml-auto text-[10px] text-muted-foreground">{skills.length} skills</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {skills.map((sk, i) => {
+                      const color = SKILL_COLORS[sk.id]
+                      const isBrandVoice = sk.id === "brand-voice"
+                      const isClickable = isBrandVoice && isActive
+                      const hasDataDot = isBrandVoice && hasBrandVoice
+                      return isClickable ? (
+                        <motion.button
+                          key={sk.id}
+                          type="button"
+                          onClick={() => setEditingSkillId(sk.id)}
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: i * 0.04, duration: 0.18 }}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-medium transition-shadow cursor-pointer hover:shadow-sm",
+                            "bg-white/80",
+                            color?.border ?? "border-border",
+                            color?.countText ?? "text-foreground",
+                            hasDataDot && "ring-1 ring-emerald-300 ring-offset-1",
+                          )}
+                        >
+                          <span className={cn("shrink-0", color?.countText ?? "text-foreground")}>
+                            {SKILL_ICONS[sk.id]}
+                          </span>
+                          {sk.label}
+                          {hasDataDot && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />}
+                        </motion.button>
+                      ) : (
+                        <motion.div
+                          key={sk.id}
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: isActive ? 1 : 0.4, scale: 1 }}
+                          transition={{ delay: isActive ? i * 0.04 : 0, duration: 0.18 }}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-medium",
+                            isActive
+                              ? cn("bg-white/80", color?.border ?? "border-border", color?.countText ?? "text-foreground")
+                              : "bg-muted/40 border-border text-muted-foreground",
+                          )}
+                        >
+                          <span className={cn("shrink-0", isActive ? (color?.countText ?? "text-foreground") : "text-muted-foreground/50")}>
+                            {SKILL_ICONS[sk.id]}
+                          </span>
+                          {sk.label}
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
 
@@ -212,7 +277,7 @@ export function ZeroHero({
             onClick={onContinue}
             className="flex items-center justify-center gap-2 w-full h-10 rounded-xl bg-primary text-primary-foreground text-[13px] font-medium hover:opacity-90 transition-opacity"
           >
-            Continue to step 1 <ChevronRight className="h-4 w-4" />
+            Continue setup <ChevronRight className="h-4 w-4" />
           </button>
         )}
 
@@ -220,6 +285,13 @@ export function ZeroHero({
           You can refine everything in the next steps
         </p>
       </div>
+      <SkillEditModal
+        skill={editingSkillId ? (SKILL_DEFS.find((s) => s.id === editingSkillId) ?? null) : null}
+        onClose={() => setEditingSkillId(null)}
+        isEnriched={false}
+        scanHints={hints}
+      />
+      </>
     )
   }
 

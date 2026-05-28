@@ -73,3 +73,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+@layer utilities {
+  @keyframes pulse-border {
+    0%, 100% { border-color: hsl(38 60% 80%); }
+    50%       { border-color: hsl(38 70% 60%); }
+  }
+  .animate-pulse-border {
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+}

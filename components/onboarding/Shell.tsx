@@ -5,6 +5,8 @@ import { ProgressRail } from "./ProgressRail"
 import { ActivityPane } from "./ActivityPane"
 import type { FileEntry } from "./PreviewPane"
 import type { Step1 } from "@/lib/schema"
+import type { AnnotationCardData } from "@/lib/onboarding-annotations"
+import type { PipelineConfiguredData } from "./PipelineCanvas"
 
 // Live stream selection context — lets the zero screen push selections to ActivityPane in real-time
 type StreamContextValue = {
@@ -12,6 +14,12 @@ type StreamContextValue = {
   setLiveStreams: (s: Step1["agent"]["streams"]) => void
   selectedSkillId: string | null
   setSelectedSkillId: (id: string | null) => void
+  liveAgentName: string | undefined
+  setLiveAgentName: (name: string) => void
+  /** Field annotation shown in ActivityPane when a form field is focused */
+  activeAnnotation: AnnotationCardData | null
+  activeFieldLabel: string | undefined
+  setActiveAnnotation: (annotation: AnnotationCardData | null, label?: string) => void
 }
 
 export const StreamContext = createContext<StreamContextValue>({
@@ -19,6 +27,11 @@ export const StreamContext = createContext<StreamContextValue>({
   setLiveStreams: () => {},
   selectedSkillId: null,
   setSelectedSkillId: () => {},
+  liveAgentName: undefined,
+  setLiveAgentName: () => {},
+  activeAnnotation: null,
+  activeFieldLabel: undefined,
+  setActiveAnnotation: () => {},
 })
 
 export function useStreamContext() {
@@ -32,6 +45,7 @@ export function Shell({
   currentStep,
   agentName,
   streamsSelected,
+  configuredData,
 }: {
   children: React.ReactNode
   files: FileEntry[]
@@ -39,15 +53,25 @@ export function Shell({
   currentStep: number
   agentName?: string
   streamsSelected?: Step1["agent"]["streams"]
+  configuredData?: PipelineConfiguredData
 }) {
   // liveStreams starts from persisted value; zero screen overrides it live without a round-trip
   const [liveStreams, setLiveStreams] = useState<Step1["agent"]["streams"] | undefined>(streamsSelected)
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null)
+  const [liveAgentName, setLiveAgentName] = useState<string | undefined>(agentName)
+  const [activeAnnotation, setActiveAnnotationState] = useState<import("@/lib/onboarding-annotations").AnnotationCardData | null>(null)
+  const [activeFieldLabel, setActiveFieldLabel] = useState<string | undefined>(undefined)
 
   const effectiveStreams = liveStreams ?? streamsSelected
+  const effectiveAgentName = liveAgentName ?? agentName
+
+  function setActiveAnnotation(annotation: import("@/lib/onboarding-annotations").AnnotationCardData | null, label?: string) {
+    setActiveAnnotationState(annotation)
+    setActiveFieldLabel(label)
+  }
 
   return (
-    <StreamContext.Provider value={{ liveStreams, setLiveStreams, selectedSkillId, setSelectedSkillId }}>
+    <StreamContext.Provider value={{ liveStreams, setLiveStreams, selectedSkillId, setSelectedSkillId, liveAgentName, setLiveAgentName, activeAnnotation, activeFieldLabel, setActiveAnnotation }}>
       <div className="flex h-screen overflow-hidden bg-background">
         {/* Rail — 180px, minimal step list */}
         <ProgressRail completedSteps={completedSteps} />
@@ -68,8 +92,9 @@ export function Shell({
           files={files}
           completedSteps={completedSteps}
           currentStep={currentStep}
-          agentName={agentName}
+          agentName={effectiveAgentName}
           streamsSelected={effectiveStreams}
+          configuredData={configuredData}
         />
       </div>
     </StreamContext.Provider>

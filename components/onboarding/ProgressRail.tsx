@@ -19,6 +19,7 @@ export function ProgressRail({ completedSteps }: { completedSteps: number[] }) {
   const pathname = usePathname()
   const current = Number(pathname?.match(/step-(\d+)/)?.[1] ?? 0)
   const isZeroScreen = pathname === "/onboarding"
+  const isOrientation = pathname === "/onboarding/orientation"
   const maxCompleted = completedSteps.length ? Math.max(...completedSteps) : 0
   const done = completedSteps.filter((n) => n >= 1 && n <= 8).length
   const pct = Math.round((done / 8) * 100)
@@ -27,12 +28,12 @@ export function ProgressRail({ completedSteps }: { completedSteps: number[] }) {
     <aside className="w-[180px] shrink-0 border-r border-border bg-background h-full flex flex-col overflow-hidden">
       {/* wordmark */}
       <div className="px-5 pt-5 pb-3">
-        <span className="text-[13px] font-semibold tracking-tight text-foreground">Conduct</span>
+        <span className="text-[13px] font-semibold tracking-tight text-foreground">Waymark</span>
       </div>
 
       {/* steps list */}
       <ol className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
-        {/* zero screen */}
+        {/* zero screen — site setup */}
         <li>
           <Link
             href="/onboarding"
@@ -40,21 +41,58 @@ export function ProgressRail({ completedSteps }: { completedSteps: number[] }) {
               "flex items-center gap-3 px-3 h-9 rounded-md text-[13px] transition-colors",
               isZeroScreen
                 ? "border-l-2 border-primary pl-[10px] font-semibold text-foreground rounded-l-none"
-                : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
+                : completedSteps.length > 0
+                  ? "text-muted-foreground/50 hover:text-muted-foreground hover:bg-surface-2"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
             )}
           >
             <span className={cn(
-              "h-5 w-5 shrink-0 rounded-full border flex items-center justify-center text-[10px]",
-              isZeroScreen ? "border-primary text-primary" : "border-border text-muted-foreground",
+              "h-5 w-5 shrink-0 rounded-full border flex items-center justify-center",
+              isZeroScreen
+                ? "border-primary text-primary text-[10px]"
+                : completedSteps.length > 0
+                  ? "bg-zinc-300 border-zinc-300 text-white"
+                  : "border-border text-muted-foreground text-[10px]",
             )}>
-              ✦
+              {completedSteps.length > 0 && !isZeroScreen ? (
+                <svg viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M2.5 6.5l2.5 2.5 4.5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                "✦"
+              )}
             </span>
             Start
           </Link>
         </li>
 
+        {/* orientation — what are agents */}
+        <li>
+          <Link
+            href="/onboarding/orientation"
+            className={cn(
+              "flex items-center gap-3 px-3 h-9 rounded-md text-[13px] transition-colors",
+              isOrientation
+                ? "border-l-2 border-primary pl-[10px] font-semibold text-foreground rounded-l-none"
+                : completedSteps.length > 0
+                  ? "text-muted-foreground/50 hover:text-muted-foreground hover:bg-surface-2"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
+            )}
+          >
+            <span className={cn(
+              "h-5 w-5 shrink-0 rounded-full border flex items-center justify-center text-[10px]",
+              isOrientation
+                ? "border-primary text-primary"
+                : "border-border text-muted-foreground/50 bg-background",
+            )}>
+              ◎
+            </span>
+            Orientation
+          </Link>
+        </li>
+
         {steps.map((s) => {
-          const isDone = completedSteps.includes(s.n)
+          const isDone = completedSteps.includes(s.n) && (current === 0 || s.n < current)
           const isActive = s.n === current
           const reachable = isDone || isActive || s.n <= maxCompleted + 1
 

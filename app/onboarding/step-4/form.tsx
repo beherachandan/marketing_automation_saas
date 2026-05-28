@@ -8,6 +8,7 @@ import { step4Schema, type Step4 } from "@/lib/schema"
 import { saveStep4 } from "@/lib/persist-actions"
 import { Input, Textarea, Label, FieldError } from "@/components/ui/input"
 import { Footer } from "@/components/onboarding/Footer"
+import { useFieldAnnotation } from "@/lib/use-field-annotation"
 
 const axes: Array<{ key: keyof Step4["tone"]; left: string; right: string }> = [
   { key: "formalCasual", left: "Formal", right: "Casual" },
@@ -50,6 +51,18 @@ export function Step4Form({ initial, hasAutoFill }: { initial?: Step4; hasAutoFi
   const mark = (dirty: unknown): "auto" | "edited" | null => {
     if (!hasAutoFill) return null
     return dirty ? "edited" : "auto"
+  }
+
+  const ann = {
+    formalCasual:            useFieldAnnotation(4, "tone.formalCasual", "Formal / Casual"),
+    authoritativeFriendly:   useFieldAnnotation(4, "tone.authoritativeFriendly", "Authoritative / Friendly"),
+    technicalConversational: useFieldAnnotation(4, "tone.technicalConversational", "Technical / Conversational"),
+    playfulSerious:          useFieldAnnotation(4, "tone.playfulSerious", "Playful / Serious"),
+    attributes:              useFieldAnnotation(4, "attributes", "Voice attributes"),
+    hardRules:               useFieldAnnotation(4, "hardRules", "Hard rules"),
+    forbiddenWords:          useFieldAnnotation(4, "forbiddenWords", "Forbidden words"),
+    goodExamples:            useFieldAnnotation(4, "goodExamples", "Good examples"),
+    badExamples:             useFieldAnnotation(4, "badExamples", "Bad examples"),
   }
 
   return (
@@ -105,19 +118,19 @@ export function Step4Form({ initial, hasAutoFill }: { initial?: Step4; hasAutoFi
 
       <div>
         <Label optional hint="comma-separated" marker={mark(dirtyFields.forbiddenWords)}>Forbidden words/phrases</Label>
-        <Textarea rows={2} {...register("forbiddenWords")} />
+        <Textarea rows={2} {...register("forbiddenWords")} {...ann.forbiddenWords} />
         <FieldError message={errors.forbiddenWords?.message} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label required hint="20–2000 chars" marker={mark(dirtyFields.examples?.good)}>Good example</Label>
-          <Textarea rows={5} {...register("examples.good")} />
+          <Textarea rows={5} {...register("examples.good")} {...ann.goodExamples} />
           <FieldError message={errors.examples?.good?.message} />
         </div>
         <div>
           <Label required hint="20–2000 chars" marker={mark(dirtyFields.examples?.bad)}>Bad example</Label>
-          <Textarea rows={5} {...register("examples.bad")} />
+          <Textarea rows={5} {...register("examples.bad")} {...ann.badExamples} />
           <FieldError message={errors.examples?.bad?.message} />
         </div>
       </div>

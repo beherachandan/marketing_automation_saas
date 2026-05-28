@@ -9,6 +9,7 @@ import { saveStep5 } from "@/lib/persist-actions"
 import { Input, Textarea, Label, FieldError } from "@/components/ui/input"
 import { Footer } from "@/components/onboarding/Footer"
 import { cn } from "@/lib/cn"
+import { useFieldAnnotation } from "@/lib/use-field-annotation"
 
 type RubricKey = keyof Step5["rubric"]
 const rubricKeys: Array<{ key: RubricKey; label: string }> = [
@@ -46,6 +47,17 @@ export function Step5Form({ initial }: { initial?: Step5 }) {
   const sum = rubric ? Object.values(rubric).reduce((a, b) => a + b, 0) : 0
   const canContinue = sum === 100
 
+  const ann = {
+    articleStructure: useFieldAnnotation(5, "articleStructure", "Article structure"),
+    urlFormat:        useFieldAnnotation(5, "urlFormat", "URL format"),
+    passThreshold:    useFieldAnnotation(5, "passThreshold", "Pass threshold"),
+    qapeStructure:    useFieldAnnotation(5, "rubric.qape_structure", "QAPE Structure"),
+    earCoverage:      useFieldAnnotation(5, "rubric.ear_coverage", "EAR Coverage"),
+    extractability:   useFieldAnnotation(5, "rubric.extractability", "Extractability"),
+    trustSignals:     useFieldAnnotation(5, "rubric.trust_signals", "Trust Signals"),
+    intentMatch:      useFieldAnnotation(5, "rubric.intent_match", "Intent Match"),
+  }
+
   const submit = handleSubmit((data) => {
     setErr(null)
     start(async () => {
@@ -64,13 +76,13 @@ export function Step5Form({ initial }: { initial?: Step5 }) {
         <h2 className="text-[15px] font-semibold">Guidelines</h2>
         <div>
           <Label required>Article structure</Label>
-          <Textarea rows={3} {...register("guidelines.articleStructure")} />
+          <Textarea rows={3} {...register("guidelines.articleStructure")} {...ann.articleStructure} />
           <FieldError message={errors.guidelines?.articleStructure?.message} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label required>URL format</Label>
-            <Input {...register("guidelines.urlFormat")} />
+            <Input {...register("guidelines.urlFormat")} {...ann.urlFormat} />
             <FieldError message={errors.guidelines?.urlFormat?.message} />
           </div>
           <div>

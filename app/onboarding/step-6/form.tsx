@@ -9,6 +9,7 @@ import { saveStep6 } from "@/lib/persist-actions"
 import { Input, Textarea, Label, FieldError } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Footer } from "@/components/onboarding/Footer"
+import { useFieldAnnotation } from "@/lib/use-field-annotation"
 
 export function Step6Form({ initial }: { initial?: Step6 }) {
   const router = useRouter()
@@ -23,6 +24,7 @@ export function Step6Form({ initial }: { initial?: Step6 }) {
   })
   const seeds = watch("seeds") ?? []
   const setSeeds = (next: string[]) => setValue("seeds", next, { shouldValidate: true })
+  const annSeeds = useFieldAnnotation(6, "seeds", "Demand seeds")
 
   const add = (s: string) => {
     const t = s.trim()
@@ -65,6 +67,8 @@ export function Step6Form({ initial }: { initial?: Step6 }) {
             placeholder="e.g. classroom assessment strategies"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onFocus={annSeeds.onFocus}
+            onBlur={annSeeds.onBlur}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault()

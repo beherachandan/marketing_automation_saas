@@ -21,7 +21,7 @@ const stepMeta: Record<number, { label: string; description: string }> = {
   2: { label: "Product", description: "Pairs with ICPs to form product context" },
   3: { label: "ICPs", description: "Finalizes product-context.md" },
   4: { label: "Brand voice", description: "Tone axes + voice guide" },
-  5: { label: "Content strategy", description: "AEO guidelines + scoring rubric" },
+  5: { label: "Content strategy", description: "GEO guidelines + scoring rubric" },
   6: { label: "Demand seeds", description: "Trend-seeds.json for research skill" },
   7: { label: "Integrations", description: "Tools, CMS ids, tenant.json" },
   8: { label: "Launch", description: "Cron schedules + runtime host" },

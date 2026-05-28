@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { loadOnboardingState } from "@/lib/persist"
 import { isDevBypass } from "@/lib/persist-local"
@@ -15,9 +14,10 @@ import {
   toWebflowIdsMd,
   toTenantJson,
 } from "@/lib/file-generators"
-import { Shell } from "@/components/onboarding/Shell"
+import { ShellGate } from "@/components/onboarding/ShellGate"
 import type { FileEntry } from "@/components/onboarding/PreviewPane"
 import type { OnboardingState } from "@/lib/schema"
+import type { PipelineConfiguredData } from "@/components/onboarding/PipelineCanvas"
 
 export const dynamic = "force-dynamic"
 
@@ -32,30 +32,34 @@ export default async function OnboardingLayout({ children }: { children: React.R
 
   const state = await loadOnboardingState()
   const files = partialFiles(state)
-
-  const hdrs = await headers()
-  const pathname = hdrs.get("x-invoke-path") ?? hdrs.get("next-url") ?? hdrs.get("referer") ?? ""
-  const m = pathname.match(/step-(\d+)/)
-  const currentStep = m ? Number(m[1]) : Math.max(1, ...(state.completedSteps ?? [0]))
-
-  // Zero screen gets full-viewport layout (no Shell) — match /onboarding exactly
-  const isZeroScreen = /^\/onboarding\/?$/.test(pathname) || (!m && !pathname.includes("step-"))
-
-  if (isZeroScreen) {
-    return <>{children}</>
-  }
+  const configuredData = buildConfiguredData(state)
 
   return (
-    <Shell
+    <ShellGate
       files={files}
       completedSteps={state.completedSteps ?? []}
-      currentStep={currentStep}
       agentName={state.step1?.agent?.name}
       streamsSelected={state.step1?.agent?.streams}
+      configuredData={configuredData}
     >
       {children}
-    </Shell>
+    </ShellGate>
   )
+}
+
+function buildConfiguredData(s: Partial<OnboardingState>): PipelineConfiguredData {
+  return {
+    agentName: s.step1?.agent?.name,
+    streams: s.step1?.agent?.streams as string[] | undefined,
+    productName: s.step2?.product?.name,
+    icpRoles: s.step3?.icps?.map((i) => i.role),
+    toneLabel: s.step4?.attributes?.[0],
+    formalCasual: s.step4?.tone?.formalCasual,
+    passThreshold: s.step5?.passThreshold,
+    seedLabel: s.step6?.seeds?.[0],
+    slackChannel: s.step7?.slack?.channelName,
+    cmsProvider: s.step7?.cms?.provider,
+  }
 }
 
 function partialFiles(s: Partial<OnboardingState>): FileEntry[] {

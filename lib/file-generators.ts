@@ -128,7 +128,7 @@ ${esc(s4.examples.bad)}
 }
 
 export function toAeoGuidelinesMd(s5: Step5): string {
-  return `# AEO Guidelines
+  return `# GEO Guidelines
 
 ## Article structure
 ${esc(s5.guidelines.articleStructure)}
@@ -159,7 +159,7 @@ export function toAeoScoringRubricMd(s5: Step5): string {
   ]
   const total = rows.reduce((sum, [, n]) => sum + n, 0)
   const body = rows.map(([k, v]) => `| ${k} | ${v}% |`).join("\n")
-  return `# AEO Scoring Rubric
+  return `# GEO Scoring Rubric
 
 Pass threshold: **${s5.passThreshold.toFixed(1)} / 10**
 

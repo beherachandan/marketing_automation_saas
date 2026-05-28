@@ -22,7 +22,7 @@ export default async function SignInPage({
       >
         {/* logo */}
         <div>
-          <span className="text-[13px] font-semibold tracking-tight text-white/90">Conduct</span>
+          <span className="text-[13px] font-semibold tracking-tight text-white/90">Waymark</span>
           <span className="ml-2 text-[11px] font-mono text-white/30">by you</span>
         </div>
 
@@ -30,7 +30,7 @@ export default async function SignInPage({
         <div className="space-y-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight leading-tight text-white">
-              Your AEO content engine,<br />configured in 8 steps.
+              Your GEO content engine,<br />configured in 8 steps.
             </h1>
             <p className="mt-3 text-[14px] leading-relaxed text-white/60">
               From your website domain to a fully trained Slack bot — brand-aware, rubric-scored, and auto-publishing.
@@ -41,7 +41,7 @@ export default async function SignInPage({
           <ul className="space-y-3">
             {[
               { icon: "🤖", label: "AI agent trained on your brand voice & ICPs" },
-              { icon: "📊", label: "9-dimension AEO rubric, auto-calibrated" },
+              { icon: "📊", label: "5-dimension GEO rubric, auto-calibrated" },
               { icon: "💬", label: "Slack-native: /audit and /draft from any channel" },
               { icon: "🔄", label: "4 automated crons: discovery, citation, re-score" },
             ].map(({ icon, label }) => (
@@ -57,7 +57,7 @@ export default async function SignInPage({
             className="rounded-lg p-4 text-[12px] font-mono"
             style={{ background: "hsl(var(--activity-border))", border: "1px solid hsl(var(--activity-border))" }}
           >
-            <p className="text-white/40 mb-2">@conduct audit https://yoursite.com</p>
+            <p className="text-white/40 mb-2">@waymark audit https://yoursite.com</p>
             <div className="flex items-center gap-2 mb-1">
               <span className="px-1.5 py-0.5 rounded bg-brand-500/30 text-brand-200">8.4 / 10</span>
               <span className="text-green-400">✓ Passed</span>
@@ -66,7 +66,7 @@ export default async function SignInPage({
           </div>
         </div>
 
-        <p className="text-[11px] text-white/25">© 2026 Conduct. No password required.</p>
+        <p className="text-[11px] text-white/25">© 2026 Waymark. No password required.</p>
 
         {/* decorative gradient orb */}
         <div
@@ -80,7 +80,7 @@ export default async function SignInPage({
         <div className="w-full max-w-[360px]">
           {/* mobile logo */}
           <div className="md:hidden mb-8">
-            <span className="text-[15px] font-semibold tracking-tight">Conduct</span>
+            <span className="text-[15px] font-semibold tracking-tight">Waymark</span>
           </div>
 
           <h2 className="text-xl font-semibold tracking-tight mb-1">

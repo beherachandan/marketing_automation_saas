@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import { saveStep1 } from "@/lib/persist-actions"
 import { saveSelectedProductLines } from "@/lib/persist-actions"
 import { SKILL_DEFS, streamEnum, type Step1 } from "@/lib/schema"
@@ -9,7 +10,31 @@ import type { ScannedHints } from "@/lib/schema"
 import { Input, Label, FieldError } from "@/components/ui/input"
 import { cn } from "@/lib/cn"
 import { useStreamContext } from "@/components/onboarding/Shell"
-import { SkillCard } from "@/components/onboarding/SkillCard"
+import { SKILL_COLORS } from "@/components/onboarding/SkillCard"
+import { SkillEditModal } from "@/components/onboarding/SkillEditModal"
+import {
+  Search, TrendingUp, Map, FileSearch, Link2, BarChart2,
+  PenTool, Mic2, Megaphone, MousePointerClick,
+} from "lucide-react"
+
+const SKILL_ICONS: Record<string, React.ReactNode> = {
+  "keyword-research": <Search className="h-3.5 w-3.5" />,
+  "trend-discovery":  <TrendingUp className="h-3.5 w-3.5" />,
+  "sitemap-audit":    <Map className="h-3.5 w-3.5" />,
+  "on-page-audit":    <FileSearch className="h-3.5 w-3.5" />,
+  "citation-audit":   <Link2 className="h-3.5 w-3.5" />,
+  "content-rubric":   <BarChart2 className="h-3.5 w-3.5" />,
+  "ai-draft":         <PenTool className="h-3.5 w-3.5" />,
+  "brand-voice":      <Mic2 className="h-3.5 w-3.5" />,
+  "ad-copy":          <Megaphone className="h-3.5 w-3.5" />,
+  "lp-audit":         <MousePointerClick className="h-3.5 w-3.5" />,
+}
+
+const STREAM_META = {
+  SEO:       { color: "text-blue-700",    border: "border-blue-200",    bg: "bg-blue-50",    label: "SEO",      iconColor: "text-blue-500"    },
+  "AEO/GEO": { color: "text-emerald-700", border: "border-emerald-200", bg: "bg-emerald-50", label: "AEO / GEO",iconColor: "text-emerald-500" },
+  Paid:      { color: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "Paid",     iconColor: "text-amber-500"   },
+} as const
 
 const ALL_STREAMS = streamEnum.options
 
@@ -74,7 +99,7 @@ interface SetupFormProps {
 
 export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteChange, onScanStart, onScanLine, onScanDone, onScanError }: SetupFormProps) {
   const router = useRouter()
-  const { setLiveStreams, setSelectedSkillId } = useStreamContext()
+  const { setLiveStreams } = useStreamContext()
   const [workspace, setWorkspace] = useState(initial.workspace)
   const [website, setWebsite] = useState(initial.website)
   const [streams, setStreams] = useState<Step1["agent"]["streams"]>(() => {
@@ -82,8 +107,8 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
     return s
   })
   const [errors, setErrors] = useState<{ workspace?: string; website?: string; streams?: string }>({})
-  // Track newly-activated skill IDs for the brief "activated" flash
   const [justActivated, setJustActivated] = useState<Set<string>>(new Set())
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null)
 
   // Scan state
   const [scanErr, setScanErr] = useState<string | null>(null)
@@ -146,11 +171,19 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
 
   const validate = () => {
     const errs: typeof errors = {}
-    if (!workspace.trim() || workspace.trim().length < 2) errs.workspace = "Workspace name must be at least 2 characters"
     if (website.trim() && !/^https?:\/\/.+\..+/.test(website.trim())) errs.website = "Enter a full URL like https://example.com"
     if (streams.length === 0) errs.streams = "Select at least one work stream"
     setErrors(errs)
     return Object.keys(errs).length === 0
+  }
+
+  const deriveWorkspace = (url: string): string => {
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, "").split(".")[0]
+      return host.charAt(0).toUpperCase() + host.slice(1)
+    } catch {
+      return "My workspace"
+    }
   }
 
   const addLine = (line: ScanLine) => onScanLineRef.current?.(line)
@@ -254,10 +287,11 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
   }
 
   const saveAndScan = async (skipScan = false) => {
+    const derivedWorkspace = workspace.trim() || deriveWorkspace(website.trim())
     const partialStep1: Step1 = {
-      workspace: workspace.trim(),
+      workspace: derivedWorkspace,
       website: website.trim(),
-      agent: { name: "Conduct", role: "Head of AEO Content", streams },
+      agent: { name: "Waymark", role: "Head of GEO Content", streams },
       user: { name: "", email: "placeholder@setup.local", timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
     }
     try {
@@ -302,16 +336,6 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
             onChange={(e) => { setWebsite(e.target.value); websiteRef.current = e.target.value; onWebsiteChange?.(e.target.value) }}
           />
           {errors.website && <FieldError message={errors.website} />}
-        </div>
-        <div>
-          <Label htmlFor="workspace">Workspace name *</Label>
-          <Input
-            id="workspace"
-            placeholder="Acme Marketing"
-            value={workspace}
-            onChange={(e) => setWorkspace(e.target.value)}
-          />
-          {errors.workspace && <FieldError message={errors.workspace} />}
         </div>
       </section>
 
@@ -362,29 +386,63 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
         </div>
         {errors.streams && <FieldError message={errors.streams} />}
 
-        {/* Skill agent cards — inline preview, same design as right panel */}
+        {/* Skill chip cards — grouped by stream, same visual as right panel */}
         {activeSkills.length > 0 && (
-          <>
-            <p className="mt-3 text-[11px] text-muted-foreground/50">
-              Ghost lines fill with real data as you complete steps · mirrored in the panel →
-            </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {activeSkills.map((skill) => (
-                <SkillCard
-                  key={skill.id}
-                  skill={skill}
-                  isEnriched={false}
-                  isNew={justActivated.has(skill.id)}
-                  variant="light"
-                  size="full"
-                  onClick={() => {
-                    setSelectedSkillId(skill.id)
-                    setTimeout(() => setSelectedSkillId(null), 1500)
-                  }}
-                />
-              ))}
-            </div>
-          </>
+          <div className="mt-4 flex flex-col gap-2">
+            {(["SEO", "AEO/GEO", "Paid"] as const).map((stream) => {
+              const meta = STREAM_META[stream]
+              const isActive = streams.includes(stream as Step1["agent"]["streams"][number])
+              if (!isActive) return null
+              const skills = SKILL_DEFS.filter((sk) => sk.streams[0] === stream)
+
+              return (
+                <motion.div
+                  key={stream}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={cn("rounded-xl border p-3", meta.bg, meta.border)}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={cn("text-[11px] font-semibold", meta.color)}>{meta.label}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground">{skills.length} skills</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <AnimatePresence>
+                      {skills.map((sk, i) => {
+                        const color = SKILL_COLORS[sk.id]
+                        const isNew = justActivated.has(sk.id)
+                        return (
+                          <motion.button
+                            key={sk.id}
+                            type="button"
+                            initial={{ opacity: 0, scale: 0.85 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: i * 0.04, duration: 0.18 }}
+                            onClick={() => setEditingSkillId(sk.id)}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-medium transition-shadow cursor-pointer hover:shadow-sm",
+                              "bg-white/80",
+                              color?.border ?? "border-border",
+                              color?.countText ?? "text-foreground",
+                              isNew && "ring-1 ring-offset-1",
+                              isNew && (color?.ring ?? "ring-zinc-300"),
+                            )}
+                          >
+                            <span className={cn("shrink-0", color?.countText ?? "text-foreground")}>
+                              {SKILL_ICONS[sk.id]}
+                            </span>
+                            {sk.label}
+                          </motion.button>
+                        )
+                      })}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
         )}
       </section>
 
@@ -428,6 +486,12 @@ export function SetupForm({ initial, scannedHints, onStreamsChange, onWebsiteCha
           {alreadyScanned && website.trim() ? "Rescan & continue →" : website.trim() ? "Continue & scan →" : "Continue →"}
         </button>
       </div>
+
+      <SkillEditModal
+        skill={editingSkillId ? (SKILL_DEFS.find((s) => s.id === editingSkillId) ?? null) : null}
+        onClose={() => setEditingSkillId(null)}
+        isEnriched={false}
+      />
     </div>
   )
 }

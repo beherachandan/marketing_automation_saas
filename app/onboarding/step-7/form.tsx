@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Footer } from "@/components/onboarding/Footer"
 import { cn } from "@/lib/cn"
 import { SlackSandbox } from "./SlackSandbox"
+import { useFieldAnnotation } from "@/lib/use-field-annotation"
 
 export function Step7Form({ initial, devBypass = false }: { initial?: Step7; devBypass?: boolean }) {
   const router = useRouter()
@@ -32,6 +33,15 @@ export function Step7Form({ initial, devBypass = false }: { initial?: Step7; dev
   const slackInstalled = watch("slack.installed")
   const slackBotName = watch("slack.botName") || "conduct"
   const cmsProvider = watch("cms.provider")
+
+  const ann = {
+    slackWorkspace: useFieldAnnotation(7, "slack.workspace", "Slack workspace"),
+    slackChannel:   useFieldAnnotation(7, "slack.channelId", "Slack channel"),
+    slackBotName:   useFieldAnnotation(7, "slack.botName", "Bot name"),
+    cmsSiteId:      useFieldAnnotation(7, "cms.siteId", "CMS site ID"),
+    semrushKey:     useFieldAnnotation(7, "semrushApiKey", "Semrush API key"),
+    dataforseoKey:  useFieldAnnotation(7, "dataforseoKey", "DataForSEO key"),
+  }
 
   const submit = handleSubmit((data) => {
     setErr(null)
@@ -62,7 +72,7 @@ export function Step7Form({ initial, devBypass = false }: { initial?: Step7; dev
             <div className="grid grid-cols-[180px_1fr] gap-3 items-end">
               <div>
                 <Label required hint="1–32 chars">Bot name</Label>
-                <Input placeholder="conduct" {...register("slack.botName")} />
+                <Input placeholder="conduct" {...register("slack.botName")} {...ann.slackBotName} />
                 <FieldError message={errors.slack?.botName?.message} />
               </div>
               <p className="text-[12px] text-muted-foreground leading-relaxed">
@@ -115,7 +125,7 @@ export function Step7Form({ initial, devBypass = false }: { initial?: Step7; dev
         <div className="flex gap-2 items-end">
           <div className="flex-1">
             <Label optional>API key</Label>
-            <Input type="password" {...register("semrush.apiKey")} />
+            <Input type="password" {...register("semrush.apiKey")} {...ann.semrushKey} />
           </div>
           <select
             {...register("semrush.status")}
@@ -140,7 +150,7 @@ export function Step7Form({ initial, devBypass = false }: { initial?: Step7; dev
           </div>
           <div>
             <Label optional>Password</Label>
-            <Input type="password" {...register("dataforseo.password")} />
+            <Input type="password" {...register("dataforseo.password")} {...ann.dataforseoKey} />
           </div>
           <select
             {...register("dataforseo.status")}
@@ -191,7 +201,7 @@ export function Step7Form({ initial, devBypass = false }: { initial?: Step7; dev
           </div>
           {cmsProvider === "webflow" && (
             <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Site ID" {...register("cms.siteId")} />
+              <Input placeholder="Site ID" {...register("cms.siteId")} {...ann.cmsSiteId} />
               <Input type="password" placeholder="API token" {...register("cms.token")} />
             </div>
           )}

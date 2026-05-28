@@ -14,7 +14,7 @@ export default async function VerifyPage({
     <main className="min-h-screen flex items-center justify-center px-6 bg-background">
       <div className="w-full max-w-[360px]">
         <div className="mb-8">
-          <span className="text-[15px] font-semibold tracking-tight">Conduct</span>
+          <span className="text-[15px] font-semibold tracking-tight">Waymark</span>
         </div>
 
         <h2 className="text-xl font-semibold tracking-tight mb-1">Verify your email</h2>

@@ -34,7 +34,7 @@ export async function loadTenantContext(workspaceId: string): Promise<{
 
 /**
  * Build the common system-prompt preamble every agent uses.
- * Packs IDENTITY + product context + brand voice + AEO guidelines + rubric.
+ * Packs IDENTITY + product context + brand voice + GEO guidelines + rubric.
  */
 export function buildSystemPreamble(files: Record<string, string>): string {
   const parts = [
@@ -47,7 +47,7 @@ export function buildSystemPreamble(files: Record<string, string>): string {
     `# Brand voice`,
     files["aeo/context/brand-voice-guide.md"] ?? files["brand-voice-guide.md"] ?? "",
     ``,
-    `# AEO guidelines`,
+    `# GEO guidelines`,
     files["aeo/context/aeo-guidelines.md"] ?? files["aeo-guidelines.md"] ?? "",
     ``,
     `# Scoring rubric`,

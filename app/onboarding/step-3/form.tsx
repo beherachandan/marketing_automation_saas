@@ -10,6 +10,7 @@ import { Input, Textarea, Label, FieldError } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Footer } from "@/components/onboarding/Footer"
+import { useFieldAnnotation } from "@/lib/use-field-annotation"
 
 function emptyIcp() {
   return { name: "", role: "", industry: "", pains: [""], goals: [""], jobsToBeDone: "" }
@@ -44,6 +45,15 @@ export function Step3Form({ initial, hasAutoFill }: { initial?: Step3; hasAutoFi
     return dirty ? "edited" : "auto"
   }
 
+  const ann = {
+    name:       useFieldAnnotation(3, "icps[].name", "Persona name"),
+    role:       useFieldAnnotation(3, "icps[].role", "Role"),
+    industry:   useFieldAnnotation(3, "icps[].industry", "Industry"),
+    painPoints: useFieldAnnotation(3, "icps[].painPoints", "Pain points"),
+    goals:      useFieldAnnotation(3, "icps[].goals", "Goals"),
+    jtbd:       useFieldAnnotation(3, "icps[].jtbd", "Jobs to be done"),
+  }
+
   return (
     <form onSubmit={submit} className="flex flex-col gap-6">
       {fields.map((f, i) => (
@@ -60,24 +70,24 @@ export function Step3Form({ initial, hasAutoFill }: { initial?: Step3; hasAutoFi
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label required marker={mark(dirtyFields.icps?.[i]?.name)}>Persona name</Label>
-                <Input {...register(`icps.${i}.name` as const)} />
+                <Input {...register(`icps.${i}.name` as const)} {...ann.name} />
               </div>
               <div>
                 <Label required marker={mark(dirtyFields.icps?.[i]?.role)}>Role</Label>
-                <Input {...register(`icps.${i}.role` as const)} />
+                <Input {...register(`icps.${i}.role` as const)} {...ann.role} />
               </div>
               <div>
                 <Label required marker={mark(dirtyFields.icps?.[i]?.industry)}>Industry</Label>
-                <Input {...register(`icps.${i}.industry` as const)} />
+                <Input {...register(`icps.${i}.industry` as const)} {...ann.industry} />
               </div>
             </div>
 
-            <ArrayField form={form} name={`icps.${i}.pains`} label="Pain points" placeholder="e.g. Tedious report-building" required marker={mark(dirtyFields.icps?.[i]?.pains)} />
-            <ArrayField form={form} name={`icps.${i}.goals`} label="Goals" placeholder="e.g. 10x content velocity" required marker={mark(dirtyFields.icps?.[i]?.goals)} />
+            <ArrayField form={form} name={`icps.${i}.pains`} label="Pain points" placeholder="e.g. Tedious report-building" required marker={mark(dirtyFields.icps?.[i]?.pains)} onFocusAnnotation={ann.painPoints.onFocus} onBlurAnnotation={ann.painPoints.onBlur} />
+            <ArrayField form={form} name={`icps.${i}.goals`} label="Goals" placeholder="e.g. 10x content velocity" required marker={mark(dirtyFields.icps?.[i]?.goals)} onFocusAnnotation={ann.goals.onFocus} onBlurAnnotation={ann.goals.onBlur} />
 
             <div>
               <Label required hint="10–2000 chars" marker={mark(dirtyFields.icps?.[i]?.jobsToBeDone)}>Jobs to be done</Label>
-              <Textarea rows={3} {...register(`icps.${i}.jobsToBeDone` as const)} />
+              <Textarea rows={3} {...register(`icps.${i}.jobsToBeDone` as const)} {...ann.jtbd} />
             </div>
           </CardContent>
         </Card>
@@ -99,6 +109,8 @@ function ArrayField({
   placeholder,
   required,
   marker,
+  onFocusAnnotation,
+  onBlurAnnotation,
 }: {
   form: ReturnType<typeof useForm<Step3>>
   name: `icps.${number}.pains` | `icps.${number}.goals`
@@ -106,6 +118,8 @@ function ArrayField({
   placeholder: string
   required?: boolean
   marker?: "auto" | "edited" | null
+  onFocusAnnotation?: () => void
+  onBlurAnnotation?: () => void
 }) {
   const values = (form.watch(name) ?? []) as string[]
   const set = (next: string[]) => form.setValue(name, next, { shouldValidate: true, shouldDirty: true })
@@ -118,6 +132,8 @@ function ArrayField({
             <Input
               value={v}
               placeholder={placeholder}
+              onFocus={onFocusAnnotation}
+              onBlur={onBlurAnnotation}
               onChange={(e) => {
                 const next = [...values]
                 next[idx] = e.target.value

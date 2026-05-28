@@ -27,9 +27,9 @@ export function Footer({
       <div className="flex items-center gap-3">
         {hint && <span className="text-[12px] text-muted-foreground">{hint}</span>}
         <Button
+          type="submit"
           size="md"
           disabled={saving || canContinue === false}
-          onClick={() => void onContinue()}
         >
           {saving ? "Saving…" : currentStep === 8 ? "Launch engine" : "Continue →"}
         </Button>

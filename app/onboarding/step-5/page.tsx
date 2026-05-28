@@ -11,7 +11,7 @@ export default async function Step5Page() {
       <StepHeader
         step="5"
         title="Content strategy & rubric"
-        description="The evaluator scores every audit against these 9 dimensions. Weights must sum to 100 — higher weight means the engine treats that dimension as more important."
+        description="The evaluator scores every draft against these 5 dimensions. Weights must sum to 100 — higher weight means the engine treats that dimension as more important."
       />
       <Step5Form initial={state.step5} />
     </div>

@@ -44,7 +44,7 @@ export async function runDraft(workspaceId: string, topic: string): Promise<Draf
 
   const blocks = [
     { type: "header", text: { type: "plain_text", text: title.slice(0, 140) || "Draft" } },
-    { type: "context", elements: [{ type: "mrkdwn", text: `${wordCount} words · draft posted by Conduct` }] },
+    { type: "context", elements: [{ type: "mrkdwn", text: `${wordCount} words · draft posted by Waymark` }] },
     { type: "divider" },
     ...chunkForBlocks(body).map((chunk) => ({
       type: "section",
